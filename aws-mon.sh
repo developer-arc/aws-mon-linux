@@ -2,23 +2,23 @@
 
 # Copyright (C) 2014 mooapp
 #
-# Licensed under the Apache License, Version 2.0 (the "License"). You may not 
-# use this file except in compliance with the License. A copy of the License 
+# Licensed under the Apache License, Version 2.0 (the "License"). You may not
+# use this file except in compliance with the License. A copy of the License
 # is located at
 #
 #        http://www.apache.org/licenses/LICENSE-2.0
 #
-# or in the "LICENSE" file accompanying this file. This file is distributed 
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-# express or implied. See the License for the specific language governing 
+# or in the "LICENSE" file accompanying this file. This file is distributed
+# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
 
 ########################################
 # Initial Settings
 ########################################
-SCRIPT_NAME=${0##*/} 
-SCRIPT_VERSION=1.1 
+SCRIPT_NAME=${0##*/}
+SCRIPT_VERSION=1.1
 
 instanceid=`wget -q -O - http://169.254.169.254/latest/meta-data/instance-id`
 azone=`wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone`
@@ -37,10 +37,10 @@ GIGA=1073741824
 ########################################
 # Usage
 ########################################
-usage() 
-{ 
+usage()
+{
     echo "Usage: $SCRIPT_NAME [options] "
-    echo "Options:" 
+    echo "Options:"
     printf "    %-28s %s\n" "-h|--help" "Displays detailed usage information."
     printf "    %-28s %s\n" "--version" "Displays the version number."
     printf "    %-28s %s\n" "--verify" "Checks configuration and prepares a remote call."
@@ -51,6 +51,9 @@ usage()
     printf "    %-28s %s\n" "--load-ave1" "Reports load average for 1 minute in counts."
     printf "    %-28s %s\n" "--load-ave5" "Reports load average for 5 minutes in counts."
     printf "    %-28s %s\n" "--load-ave15" "Reports load average for 15 minutes in counts."
+    printf "    %-28s %s\n" "--load-ave1-per-core" "Reports load average per cpu core for 1 minute in percentages."
+    printf "    %-28s %s\n" "--load-ave5-per-core" "Reports load average per cpu core for 5 minute in percentages."
+    printf "    %-28s %s\n" "--load-ave15-per-core" "Reports load average per cpu core for 15 minute in percentages."
     printf "    %-28s %s\n" "--interrupt" "Reports interrupt in counts."
     printf "    %-28s %s\n" "--context-switch" "Reports context switch in counts."
     printf "    %-28s %s\n" "--cpu-us" "Reports cpu utilization (user) in percentages."
@@ -79,9 +82,9 @@ usage()
 # Options
 ########################################
 SHORT_OPTS="h"
-LONG_OPTS="help,version,verify,verbose,debug,from-cron,profile:,load-ave1,load-ave5,load-ave15,interrupt,context-switch,cpu-us,cpu-sy,cpu-id,cpu-wa,cpu-st,memory-units:,mem-used-incl-cache-buff,mem-util,mem-used,mem-avail,swap-util,swap-used,swap-avail,disk-path:,disk-space-units:,disk-space-util,disk-space-used,disk-space-avail,all-items" 
+LONG_OPTS="help,version,verify,verbose,debug,from-cron,profile:,load-ave1,load-ave5,load-ave15,load-ave1-per-core,load-ave5-per-core,load-ave15-per-core,interrupt,context-switch,cpu-us,cpu-sy,cpu-id,cpu-wa,cpu-st,memory-units:,mem-used-incl-cache-buff,mem-util,mem-used,mem-avail,swap-util,swap-used,swap-avail,disk-path:,disk-space-units:,disk-space-util,disk-space-used,disk-space-avail,all-items"
 
-ARGS=$(getopt -s bash --options $SHORT_OPTS --longoptions $LONG_OPTS --name $SCRIPT_NAME -- "$@" ) 
+ARGS=$(getopt -s bash --options $SHORT_OPTS --longoptions $LONG_OPTS --name $SCRIPT_NAME -- "$@" )
 
 VERIFY=0
 VERBOSE=0
@@ -114,22 +117,22 @@ DISK_SPACE_UTIL=0
 DISK_SPACE_USED=0
 DISK_SPACE_AVAIL=0
 
-eval set -- "$ARGS" 
-while true; do 
-    case $1 in 
+eval set -- "$ARGS"
+while true; do
+    case $1 in
         # General
-        -h|--help) 
-            usage 
-            exit 0 
-            ;; 
-        --version) 
-            echo "$SCRIPT_VERSION" 
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        --version)
+            echo "$SCRIPT_VERSION"
             ;;
         --verify)
-            VERIFY=1  
-            ;; 
+            VERIFY=1
+            ;;
         --verbose)
-            VERBOSE=1   
+            VERBOSE=1
             ;;
         --debug)
             DEBUG=1
@@ -151,6 +154,15 @@ while true; do
             ;;
         --load-ave15)
             LOAD_AVE15=1
+            ;;
+        --load-ave1-per-core)
+            LOAD_AVE1_PER_CORE=1
+            ;;
+        --load-ave5-per-core)
+            LOAD_AVE5_PER_CORE=1
+            ;;
+        --load-ave15-per-core)
+            LOAD_AVE15_PER_CORE=1
             ;;
         --interrupt)
             INTERRUPT=1
@@ -183,26 +195,26 @@ while true; do
             MEM_USED_INCL_CACHE_BUFF=1
             ;;
         --mem-util)
-            MEM_UTIL=1  
+            MEM_UTIL=1
             ;;
-        --mem-used) 
-            MEM_USED=1 
+        --mem-used)
+            MEM_USED=1
             ;;
-        --mem-avail) 
-            MEM_AVAIL=1 
+        --mem-avail)
+            MEM_AVAIL=1
             ;;
-        --swap-util) 
-            SWAP_UTIL=1 
+        --swap-util)
+            SWAP_UTIL=1
             ;;
-        --swap-used) 
-            SWAP_USED=1 
+        --swap-used)
+            SWAP_USED=1
             ;;
         --swap-avail)
             SWAP_AVAIL=1
             ;;
         # Disk
-        --disk-path) 
-            shift 
+        --disk-path)
+            shift
             DISK_PATH=$1
             ;;
         --disk-space-units)
@@ -222,6 +234,9 @@ while true; do
             LOAD_AVE1=1
             LOAD_AVE5=1
             LOAD_AVE15=1
+            LOAD_AVE1_PER_CORE=1
+            LOAD_AVE5_PER_CORE=1
+            LOAD_AVE15_PER_CORE=1
             INTERRUPT=1
             CONTEXT_SWITCH=1
             CPU_US=1
@@ -239,16 +254,16 @@ while true; do
             DISK_SPACE_USED=1
             DISK_SPACE_AVAIL=1
             ;;
-        --) 
+        --)
             shift
-            break 
-            ;; 
-        *) 
+            break
+            ;;
+        *)
             shift
-            break 
-            ;; 
-    esac 
-    shift 
+            break
+            ;;
+    esac
+    shift
 done
 
 
@@ -256,6 +271,7 @@ done
 # Command Output
 ########################################
 loadavg_output=`/bin/cat /proc/loadavg`
+cpu_core_output=`grep "processor" /proc/cpuinfo | wc -l`
 vmstat_output=`/usr/bin/vmstat -n 1 2`
 meminfo_output=`/bin/cat /proc/meminfo`
 df_output=`/bin/df -k -l -P $DISK_PATH`
@@ -326,6 +342,7 @@ fi
 if [ $DEBUG -eq 1 ]; then
     echo "-----loadavg-----"
     echo "$loadavg_output"
+    echo "$cpu_core_output"
     echo "-----vmstat-----"
     echo "$vmstat_output"
     echo "-----/proc/meminfo-----"
@@ -335,13 +352,14 @@ if [ $DEBUG -eq 1 ]; then
 fi
 
 # Load Average
+cpu_core=`echo $cpu_core_output`
 if [ $LOAD_AVE1 -eq 1 ]; then
     loadave1=`echo $loadavg_output | tr -s ' ' | cut -d ' ' -f 1`
     if [ $VERBOSE -eq 1 ]; then
         echo "loadave1:$loadave1"
     fi
     if [ $VERIFY -eq 0 ]; then
-        aws cloudwatch put-metric-data --metric-name "LoadAverage1Min" --value "$loadave1" --unit "Count" $CLOUDWATCH_OPTS 
+        aws cloudwatch put-metric-data --metric-name "LoadAverage1Min" --value "$loadave1" --unit "Count" $CLOUDWATCH_OPTS
     fi
 fi
 
@@ -365,6 +383,38 @@ if [ $LOAD_AVE15 -eq 1 ]; then
     fi
 fi
 
+if [ $LOAD_AVE1_PER_CORE -eq 1 ]; then
+    loadave1=`echo $loadavg_output | tr -s ' ' | cut -d ' ' -f 1`
+    loadave1_pre_core=`echo "scale=2;$loadave1 * 100 / $cpu_core" | bc | sed -e "s/^\./0./"`
+    if [ $VERBOSE -eq 1 ]; then
+        echo "loadave1_per_core:$loadave1_pre_core"
+    fi
+    if [ $VERIFY -eq 0 ]; then
+        aws cloudwatch put-metric-data --metric-name "LoadAverage1MinPerCore" --value "$loadave1_pre_core" --unit "Percent" $CLOUDWATCH_OPTS
+    fi
+fi
+
+if [ $LOAD_AVE5_PER_CORE -eq 1 ]; then
+    loadave5=`echo $loadavg_output | tr -s ' ' | cut -d ' ' -f 2`
+    loadave5_pre_core=`echo "scale=2;$loadave5 * 100 / $cpu_core" | bc | sed -e "s/^\./0./"`
+    if [ $VERBOSE -eq 1 ]; then
+        echo "loadave5_per_core:$loadave5_pre_core"
+    fi
+    if [ $VERIFY -eq 0 ]; then
+        aws cloudwatch put-metric-data --metric-name "LoadAverage5MinPerCore" --value "$loadave5_pre_core" --unit "Percent" $CLOUDWATCH_OPTS
+    fi
+fi
+
+if [ $LOAD_AVE15_PER_CORE -eq 1 ]; then
+    loadave15=`echo $loadavg_output | tr -s ' ' | cut -d ' ' -f 3`
+    loadave15_pre_core=`echo "scale=2;$loadave15 * 100 / $cpu_core" | bc | sed -e "s/^\./0./"`
+    if [ $VERBOSE -eq 1 ]; then
+        echo "loadave15_per_core:$loadave15_pre_core"
+    fi
+    if [ $VERIFY -eq 0 ]; then
+        aws cloudwatch put-metric-data --metric-name "LoadAverage15MinPerCore" --value "$loadave15_pre_core" --unit "Percent" $CLOUDWATCH_OPTS
+    fi
+fi
 # Context Switch
 if [ $CONTEXT_SWITCH -eq 1 ]; then
     context_switch=`echo "$vmstat_output" | tail -1 | tr -s ' ' | cut -d ' ' -f 13`
@@ -495,7 +545,7 @@ if [ $MEM_AVAIL -eq 1 ]; then
     if [ $VERBOSE -eq 1 ]; then
         echo "mem_avail:$mem_avail"
     fi
-    if [ $VERIFY -eq 0 ]; then        
+    if [ $VERIFY -eq 0 ]; then
         aws cloudwatch put-metric-data --metric-name "MemoryAvailable" --value "$mem_avail" --unit "$MEM_UNITS" $CLOUDWATCH_OPTS
     fi
 fi
@@ -573,4 +623,3 @@ if [ $DISK_SPACE_AVAIL -eq 1 -a -n "$DISK_PATH" ]; then
         aws cloudwatch put-metric-data --metric-name "DiskSpaceAvailable" --value "$disk_avail" --unit "$DISK_SPACE_UNITS" $CLOUDWATCH_OPTS
     fi
 fi
-
